@@ -15,18 +15,26 @@ class HomeTableViewController: UITableViewController {
     
     let myRefreshControl = UIRefreshControl()
 
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadTweets()
-        
+
         myRefreshControl.addTarget(self, action: #selector(loadTweets), for: .valueChanged)
         tableView.refreshControl = myRefreshControl
+        self.tableView.rowHeight = UITableView.automaticDimension
+        self.tableView.estimatedRowHeight = 150
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        loadTweets()
     }
     @objc func loadTweets() {
         numberOfTweets = 20
         let url = "https://api.twitter.com/1.1/statuses/home_timeline.json"
         let params = ["count": numberOfTweets]
-        TwitterAPICaller.client?.getDictionariesRequest(url: url, parameters: params, success: {(tweets: [NSDictionary]) in
+        TwitterAPICaller.client?.getDictionariesRequest(url: url, parameters: params, success:
+        {(tweets: [NSDictionary]) in
             self.tweetArray.removeAll()
             for tweet in tweets {
                 self.tweetArray.append(tweet)
@@ -62,12 +70,17 @@ class HomeTableViewController: UITableViewController {
         let user = tweet["user"] as! NSDictionary
         cell.tweetLabel.text = tweet["text"] as? String
         cell.userNameLabel.text = user["name"] as? String
+        let screenName = user["screen_name"] as! String
+        cell.screenName.text = "@\(screenName)"
         let imageUrl = URL(string: (user["profile_image_url_https"] as? String)!)
         let data = try? Data(contentsOf: imageUrl!)
-        
         if let imageData = data {
             cell.profileImageView.image = UIImage(data: imageData)
         }
+        
+        cell.setFavorited(tweet["favorited"] as! Bool)
+        cell.tweetId = tweet["id"] as! Int
+        cell.setReTweet(tweet["retweeted"] as! Bool)
         return cell
     }
 
@@ -86,5 +99,9 @@ class HomeTableViewController: UITableViewController {
             loadMoreTweets()
         }
     }
-
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+    }
 }
